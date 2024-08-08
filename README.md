@@ -1,1 +1,1 @@
-# Power-Spectrum-Change-Under-Gradient-Perturbation
+# Power Spectrum Change Under Gradient Perturbation
