@@ -273,8 +273,6 @@ def correct_pos(pos, a_x, a_y, a_z, grid=128, BoxSize=1000., threshold=None):
     return pos_corrected
     
 
-
-
 def MAS_correction(x, MAS_index):
     return (1.0 if (x==0.0) else pow(x/np.sin(x),MAS_index))
 
