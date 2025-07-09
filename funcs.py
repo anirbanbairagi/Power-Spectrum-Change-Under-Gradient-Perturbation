@@ -275,8 +275,15 @@ def correct_pos(pos, a_x, a_y, a_z, grid=128, BoxSize=1000., threshold=None):
 
 
 
+# def MAS_correction(x, MAS_index):
+#     return (1.0 if (x==0.0) else pow(x/np.sin(x),MAS_index))  # taken from pylians
+
 def MAS_correction(x, MAS_index):
-    return (1.0 if (x==0.0) else pow(x/np.sin(x),MAS_index))
+    x = np.asarray(x)  # Ensure x is an array
+    out = np.ones_like(x)
+    nonzero = x != 0.0
+    out[nonzero] = (x[nonzero] / np.sin(x[nonzero])) ** MAS_index
+    return out
 
 def caculate_Pk(delta, BoxSize=1000., MAS_index=2):
     dft = fftshift(fftn(delta))
@@ -355,41 +362,41 @@ def angular_integral(k, q):
     return result
 
 
-def get_roots(k, Pk0, Pk0_target):
+def get_roots(k, Pk0, Pk0_target, BoxSize=1000.):
     
-    # k_nyq=np.pi*grid/BoxSize
-    # k_large_start=0.07
-    # k_large_stop=0.32
-    # I=np.zeros([len(k), len(k)])
-    # dz=1e-5
-    # z=np.arange(-1,1+dz,dz)
-    # for i,ki in enumerate(k):
-    #     for j,qj in enumerate(k):
+#     # k_nyq=np.pi*grid/BoxSize
+#     # k_large_start=0.07
+#     # k_large_stop=0.32
+#     I=np.zeros([len(k), len(k)])
+#     dz=1e-5
+#     z=np.arange(-1,1+dz,dz)
+#     for i,ki in enumerate(k):
+#         for j,qj in enumerate(k):
 
-    #         # k_in=np.sqrt(ki**2+qj**2-2*ki*qj*z)
+#             k_in=np.sqrt(ki**2+qj**2-2*ki*qj*z)
 
-    # #         ind_low=k<=k_large_start
-    # #         ind_high=(k>k_large_start)*(k<k_large_stop)
-    # #         k_in_low=k_in<=k_large_start
-    # #         k_in_high=k_in>k_large_start
+# #         ind_low=k<=k_large_start
+# #         ind_high=(k>k_large_start)*(k<k_large_stop)
+# #         k_in_low=k_in<=k_large_start
+# #         k_in_high=k_in>k_large_start
 
-    # #         Pk_nl=np.concatenate([
-    # #             # 0.9607*np.log(k_in[:50])+np.log(1.8244012214590528e-09),
-    # #             # np.exp(np.poly1d(np.polyfit(np.log(k[10:]), np.log(Pk0[10:]),1))(np.log(k_in[50:]))),
-    # #             np.exp(np.poly1d(np.polyfit(np.log(k[ind_low]), np.log(Pk0[ind_low]),2))(np.log(k_in[k_in_low]))),
-    # #             np.exp(np.poly1d(np.polyfit(np.log(k[ind_high]), np.log(Pk0[ind_high]),1))(np.log(k_in[k_in_high])))
-    # #         ])
+# #         Pk_nl=np.concatenate([
+# #             # 0.9607*np.log(k_in[:50])+np.log(1.8244012214590528e-09),
+# #             # np.exp(np.poly1d(np.polyfit(np.log(k[10:]), np.log(Pk0[10:]),1))(np.log(k_in[50:]))),
+# #             np.exp(np.poly1d(np.polyfit(np.log(k[ind_low]), np.log(Pk0[ind_low]),2))(np.log(k_in[k_in_low]))),
+# #             np.exp(np.poly1d(np.polyfit(np.log(k[ind_high]), np.log(Pk0[ind_high]),1))(np.log(k_in[k_in_high])))
+# #         ])
 
-    #         P_interp=interp1d(k, Pk0, kind=2, bounds_error=False, fill_value=0)
-    #         I[i,j] = 8*np.pi**2*ki**2*qj**2*np.trapz(P_interp(k_in)*z**2,z)/BoxSize**3
-    #         # I[i,j] = 8*np.pi**2*ki**2*qj**2*angular_integral(ki,qj)/BoxSize**3
+#             P_interp=interp1d(k, Pk0, kind=2, bounds_error=False, fill_value=0)
+#             I[i,j] = 8*np.pi**2*ki**2*qj**2*np.trapz(P_interp(k_in)*z**2,z)/BoxSize**3
+#         # I[i,j] = 8*np.pi**2*ki**2*qj**2*angular_integral(ki,qj)/BoxSize**3
 
-    # #         Pk_nl=np.interp(k_in, k, Pk0)
-    #         # if ki==qj:
-    #             # Pk_nl[-1]=0
+# #         Pk_nl=np.interp(k_in, k, Pk0)
+#         # if ki==qj:
+#             # Pk_nl[-1]=0
 
-    # #         I[i,j]=8*np.pi**2*ki**2*qj**2*np.trapz(Pk_nl*z**2,z)/BoxSize**3
-    
+# #         I[i,j]=8*np.pi**2*ki**2*qj**2*np.trapz(Pk_nl*z**2,z)/BoxSize**3
+
     I2=np.diag(k**4)
     # A=(I+I2)
     A=I2
@@ -403,11 +410,11 @@ def get_roots(k, Pk0, Pk0_target):
 
     coeffs=np.column_stack([a,b,c])
     roots=np.array([np.roots(coeffs[i]) for i in range(len(k))])
-    
-    return roots
+
+    return roots, coeffs
 
 
-def get_roots_overdensity(k, Pk0, Pk0_target, rk):
+def get_roots_overdensity(k, Pk0, Pk0_target, rk, BoxSize=1000.):
 #     I=np.zeros([len(k), len(k)])
 #     dz=1e-5
 #     z=np.arange(-1,1+dz,dz)
@@ -446,4 +453,7 @@ def get_roots_overdensity(k, Pk0, Pk0_target, rk):
     coeffs=np.column_stack([a,b,c])
     roots=np.array([np.roots(coeffs[i]) for i in range(len(k))])
     
-    return roots
+    return roots, coeffs
+
+def quadratic_eq(a,b,c, alpha):
+    return (alpha**2*a+alpha*b+c)
