@@ -404,6 +404,19 @@ def get_roots(k, Pk0, Pk0_target):
     
     return roots
 
+def terms_root(k, Pk0, Pk0_target):
+    I2=np.diag(k**4)
+    # A=(I+I2)
+    A=I2
+    a=np.matmul(A,Pk0)
+
+
+    I3=np.diag(2*k**2)
+    b=np.matmul(I3,Pk0)
+
+    c=Pk0 #Pk0_target
+    return a,b,c
+    
 
 def get_roots_overdensity(k, Pk0, Pk0_target, rk):
 #     I=np.zeros([len(k), len(k)])
