@@ -188,7 +188,8 @@ def calculate_acc(phi, grid=128, BoxSize=1000.):
 
 def calculate_acc_from_phi_k(phi_k, grid=128, BoxSize=1000.):
     freq = fftshift(fftfreq(int(grid), BoxSize/grid)) # h/Mpc
-
+    #print(2j*np.pi*freq[::20])
+    
     a_kx = np.zeros([grid,grid,grid], dtype=complex)
     a_ky = np.zeros([grid,grid,grid], dtype=complex)
     a_kz = np.zeros([grid,grid,grid], dtype=complex)
@@ -237,7 +238,7 @@ def calculate_acc_from_phi_k(phi_k, grid=128, BoxSize=1000.):
     
 #     return pos
 
-def acc_at_particle_pos(pos, a_x, a_y, a_z, grid=128, BoxSize=1000.):
+def acc_at_particle_pos(pos, a_x, a_y, a_z, grid=128, BoxSize=1000.): # equivlent to inverse CiC
     grid_pos = pos*grid/BoxSize #- 0.5
     acc = np.moveaxis(np.array([a_x, a_y, a_z]),0,-1) #= a_x*grid/BoxSize, a_y*grid/BoxSize, a_z*grid/BoxSize
     acc_at_particles = np.zeros_like(pos)
@@ -273,12 +274,13 @@ def correct_pos(pos, a_x, a_y, a_z, grid=128, BoxSize=1000., threshold=None):
     return pos_corrected
     
 
-
-
 # def MAS_correction(x, MAS_index):
 #     return (1.0 if (x==0.0) else pow(x/np.sin(x),MAS_index))  # taken from pylians
 
 def MAS_correction(x, MAS_index):
+    '''
+    x is a 3d array in practice
+    '''
     x = np.asarray(x)  # Ensure x is an array
     out = np.ones_like(x)
     nonzero = x != 0.0
@@ -361,6 +363,33 @@ def angular_integral(k, q):
     result, _ = quad(integrand, -1, 1, args=(k, q))
     return result
 
+def terms_root(k, Pk0, Pk0_target):
+    I2=np.diag(k**4)
+    # A=(I+I2)
+    A=I2
+    a=np.matmul(A,Pk0)
+
+
+    I3=np.diag(2*k**2)
+    b=np.matmul(I3,Pk0)
+
+    c=Pk0 - Pk0_target
+    return a,b,c
+
+def terms_root_gamma(k, Pk0, Pk0_target):
+    a = Pk0
+    b = 2*Pk0
+    c=Pk0 - Pk0_target
+    return a,b,c
+
+def get_roots_gamma(k, Pk0, Pk0_target, BoxSize=1000.):
+    a = Pk0
+    b = 2*Pk0
+    c=Pk0-Pk0_target
+    coeffs=np.column_stack([a,b,c])
+    roots=np.array([np.roots(coeffs[i]) for i in range(len(k))])
+
+    return roots, coeffs
 
 def get_roots(k, Pk0, Pk0_target, BoxSize=1000.):
     
